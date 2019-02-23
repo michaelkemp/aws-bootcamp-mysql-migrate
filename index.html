@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AWS MySQL Migrate</title>
+</head>
+<link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+<link rel="stylesheet" href="http://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        max-width:1200px;
+        margin:0 auto;
+    }
+    img {
+        border:3px solid black;
+        margin:10px 10px;
+        padding:0;
+        max-width: 960px;
+    }
+    li {
+        padding: 5px;
+    }
+    ol {
+        list-style-type: lower-roman;
+        list-style-position: inside;
+    }
+    .toc li {
+        font-size:1.4em;
+        list-style: none;
+    }
+    .cntr {
+        text-align:center;
+    }
+    .eg {
+        color: #080;
+    }
+    .highlight {
+        background-color: #FF9;
+    }
+    code {
+        font-family: monospace; 
+        font-size: 1em;
+        white-space: pre;
+    }
+    .codediv {
+        padding: 10px;
+        background-color: #ddd;
+        margin: 0 65px;
+        width: 850px;
+        display: block;
+        border: 1px solid black;
+    }
+    a, a:visited {
+        text-decoration: none;
+        color:#369;
+    }
+</style>
+<body>
+
+
+<h1 class='cntr'>AWS MySQL Migrate</h1>
+
+<h2 id="contents">Contents</h2> 
+    <ul class="toc">
+        <li><a href="#introduction">Introduction</a></li>
+        <li><a href="#glossary">Glossary</a></li>
+        <li><a href="#step1">Step 1. Create Security Groups in the Main VPC</a></li>
+        <li><a href="#step2">Step 2. Create a Aurora MySQL RDS Database</a></li>
+        <li><a href="#step3">Step 3. Create an EC2 Instance</a></li>
+        <li><a href="#step4">Step 4. Configure the EC2 Instance</a></li>
+    </ul>
+
+<br><br>
+<h2 id="introduction">Introduction</h2>
+   <p>When OIT provision an account in AWS, we create a <em>Main</em> VPC (virtual private cloud) divided into a number of subnets. We categorize those subnets as follows:
+        <ul>
+            <li>Public - resources placed in these subnets are accessible from the Internet.</li>
+            <li>Private - resources placed in these subnets have Internet access via NAT (network address translation) but are not visible from the Internet.</li>
+            <li>Data - resources placed in these subnets have no access to or from the Internet.</li>
+        </ul>
+        More than one subnet is created in each category, and are placed in different availability zones (AZs). An Availability Zone is an AWS data center (or group of data centers) that is geographically isolated from other AZs in a Region.
+    </p>
+    <p>We recommend when placing a Database in AWS that you place it in the Data subnets for security purposes. Because these subnets have no direct Internet access, you will need to set a way to access them to import and export data.
+    </p>
+
+<br><br>
+<h2 id="glossary">Glossary</h2>
+    <p>
+        <h4>RDS</h4>
+        Amazon Relational Database Service (Amazon RDS) makes it easy to set up, operate, and scale a relational database in the cloud. It provides cost-efficient and resizable capacity while automating time-consuming administration tasks such as hardware provisioning, database setup, patching and backups. It frees you to focus on your applications so you can give them the fast performance, high availability, security and compatibility they need. [<a href='https://aws.amazon.com/rds/'>https://aws.amazon.com/rds/</a>]
+    </p>
+    <p>
+        <h4>EC2</h4>
+        Amazon Elastic Compute Cloud (Amazon EC2) is a web service that provides secure, resizable compute capacity in the cloud. [<a href='https://aws.amazon.com/ec2/'>https://aws.amazon.com/ec2/</a>]
+    </p>
+
+
+<br><br>
+<h2 id="step1">Step 1. Create Security Groups in the Main VPC</h2>
+    <p>In order for traffic to reach our resources, we need to create two security groups. (<i class="fas fa-exclamation-triangle"></i> We are placing our resources in the Main VPC; make sure when creating your Security Groups they are also created in the Main VPC)
+    </p>
+    <ol>
+        <li>Create a Security Group with port 22 [SSH] access from BYU and port 80 [HTTP] access from anywhere.
+            <br><a href='sg-01.png'><img src='sg-01.png'></a>
+        </li>
+        <li>Create a Self Referencing Security Group with port 3306 [MYSQL/Aurora].
+            <br><a href='sg-02.png'><img src='sg-02.png'></a>
+        </li>
+    </ol>
+    <p>Security Group inbound rules can be thought of as 1) <em>WHAT</em> are we giving access to, and 2) <em>WHO</em> are we giving that access to.</p>
+    <p>We will add the Self Referencing group to our DB Instance because it has the <em>WHAT</em>. 
+        We will add it to our EC2 instance to make it the <em>WHO</em>.</p>
+
+<br><br>
+<h2 id="step2">Step 2. Create a Aurora MySQL RDS Database</h2>
+
+    <ol>
+        <li>Create an Aurora MySQL DB
+            <br><a href='rds-01.png'><img src='rds-01.png'></a>
+        </li>
+        <li>Create a replica in a different AZ; name the DB Instance and create a master username and password.
+            <br><a href='rds-02.png'><img src='rds-02.png'></a>
+        </li>
+        <li>Place our DB Instance in the Main VPC in the main-db-subnet-group. Attach the Self Referencing Security Group.
+            <br><a href='rds-03.png'><img src='rds-03.png'></a>
+        </li>
+        <li>Once the instance is created, take note of the instance end-point. [kempy-aurora.crzc9xds3qkq.us-west-2.rds.amazonaws.com]
+            <br><a href='rds-04.png'><img src='rds-04.png'></a>
+        </li>
+    </ol>
+
+    
+<br><br>
+<h2 id="step3">Step 3. Create an EC2 Instance</h2>
+    <p>Create an EC2 Instance. There are many AMIs (Amazon Machine Instances) to choose from; I selected an Ubuntu Image.</p>
+
+    <ol>
+        <li>Launch an EC2 Instance [Ubuntu Server 18.04 LTS (HVM), SSD Volume Type - ami-0bbe6b35405ecebdb (64-bit x86) / ami-0db180c518750ee4f (64-bit Arm)]
+            <br><a href='ec2-01.png'><img src='ec2-01.png'></a>
+        </li>
+        <li>Add it to a Public Subnet in the Main VPC
+            <br><a href='ec2-02.png'><img src='ec2-02.png'></a>
+        </li>
+        <li>Add the Security Group we created earlier - we'll also need to attach the 2nd security group (the self referencing one) but can only attach one when we create the instance.
+            <br><a href='ec2-03.png'><img src='ec2-03.png'></a>
+        </li>
+        <li>Once the instance is created, we attach the Self Referencing Security Group
+            <br><a href='ec2-04.png'><img src='ec2-04.png'></a>
+            <br><a href='ec2-05.png'><img src='ec2-05.png'></a>
+        </li>
+    </ol>
+
+
+   
+<br><br>
+<h2 id="step4">Step 4. Configure the EC2 Instance</h2>
+    <p>This is our gateway to our Database. We will install PHPMyAdmin as a GUI tool to view our database - this is something we would want to restrict access to in a production environment.</p>
+    <ol>
+        <li>Update the instance and install the required software - LAMP + PHPMyAdmin
+            <br><br>
+    <div class='codediv'>
+        <code>
+sudo apt-get -y update
+sudo apt-get -y upgrade
+sudo reboot
+
+sudo apt-get -y install lamp-server^
+
+sudo service apache2 status
+
+sudo apt-get -y install phpmyadmin
+# Select apache2 and No Default Database
+
+sudo vim /etc/apache2/apache2.conf
+    # Add the following lines to the bottom of the file
+    # Include web access to phpmyadmin
+    Include /etc/phpmyadmin/apache.conf
+
+sudo service apache2 restart
+
+sudo vim /etc/phpmyadmin/config.inc.php
+    # Add the following lines to the bottom of the file
+    $i++;
+    $cfg['Servers'][$i]['host'] = 'kempy-aurora.crzc9xds3qkq.us-west-2.rds.amazonaws.com';
+    $cfg['Servers'][$i]['port'] = '3306';
+    $cfg['Servers'][$i]['verbose'] = 'kempy-aurora';
+    $cfg['Servers'][$i]['connect_type'] = 'tcp';
+    $cfg['Servers'][$i]['extension'] = 'mysql';
+    $cfg['Servers'][$i]['compress'] = TRUE;
+        </code>
+    </div>
+
+
+        </li>
+        <li>Browse to http://54.188.1.202/phpmyadmin/
+            <br><a href='config-ec2-01.png'><img src='config-ec2-01.png'></a>
+        </li>
+
+         <li>Create Database - this could be done with PHPMyAdmin.
+            <br><a href='config-rds-01.png'><img src='config-rds-01.png'></a>
+            <br><br>
+    <div class='codediv'>
+        <code>
+mysql -h kempy-aurora.crzc9xds3qkq.us-west-2.rds.amazonaws.com -u iamgroot -p
+
+CREATE DATABASE classicmodels;
+CREATE USER 'newdbuser'@'%';
+SET PASSWORD FOR 'newdbuser'@'%'=PASSWORD("GandUnkedrumpQuabledVorgeBasCome");
+GRANT ALL PRIVILEGES ON classicmodels.* TO 'newdbuser'@'%' IDENTIFIED BY 'GandUnkedrumpQuabledVorgeBasCome';
+        </code>
+    </div>
+    <br><br>
+        </li>
+
+         <li>Upload our backed up database file to the EC2 instance and restore it into the database 
+            <br><a href='config-rds-01.png'><img src='config-rds-01.png'></a>
+            <br><br>
+    <div class='codediv'>
+        <code>
+#scp -i key.pem localSQLfile.sql ecsserver:/path
+scp -i aardvark-kempy-oregon-key.pem mysqlsampledatabase.sql ubuntu@54.188.1.202:/home/ubuntu
+
+mysql -h kempy-aurora.crzc9xds3qkq.us-west-2.rds.amazonaws.com\
+ -unewdbuser -p classicmodels < mysqlsampledatabase.sql
+        </code>
+    </div>
+    <br><br>
+        </li>
+        <li>Check the database in PHPMyAdmin - http://54.188.1.202/phpmyadmin/
+            <br><a href='config-rds-02.png'><img src='config-rds-02.png'></a>
+        </li>
+
+
+<br><br>
+
+</body>
+</html>
+
+
+
