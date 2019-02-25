@@ -67,12 +67,13 @@
         <li><a href="#step1">Step 1. Create Security Groups in the Main VPC</a></li>
         <li><a href="#step2">Step 2. Create a Aurora MySQL RDS Database</a></li>
         <li><a href="#step3">Step 3. Create an EC2 Instance</a></li>
-        <li><a href="#step4">Step 4. Configure the EC2 Instance</a></li>
+        <li><a href="#step4">Step 4. Configure the EC2 Instance and Upload the Database</a></li>
     </ul>
 
 <br><br>
 <h2 id="introduction">Introduction</h2>
-   <p>When OIT provision an account in AWS, we create a <em>Main</em> VPC (virtual private cloud) divided into a number of subnets. We categorize those subnets as follows:
+    <p>The database used in this example comes from <a href='http://www.mysqltutorial.org/mysql-sample-database.aspx'>http://www.mysqltutorial.org/mysql-sample-database.aspx</a></p>
+    <p>When OIT provision an account in AWS, we create a <em>Main</em> VPC (virtual private cloud) divided into a number of subnets. We categorize those subnets as follows:
         <ul>
             <li>Public - resources placed in these subnets are accessible from the Internet.</li>
             <li>Private - resources placed in these subnets have Internet access via NAT (network address translation) but are not visible from the Internet.</li>
@@ -131,7 +132,7 @@
 
     
 <br><br>
-<h2 id="step3">Step 3. Create an EC2 Instance</h2>
+<h2 id="step3">Step 3. Create an EC2 Instance and Upload the Database</h2>
     <p>Create an EC2 Instance. There are many AMIs (Amazon Machine Instances) to choose from; I selected an Ubuntu Image.</p>
 
     <ol>
