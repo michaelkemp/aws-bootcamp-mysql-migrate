@@ -136,7 +136,7 @@
     <p>Create an EC2 Instance. There are many AMIs (Amazon Machine Instances) to choose from; I selected an Ubuntu Image.</p>
 
     <ol>
-        <li>Launch an EC2 Instance [Ubuntu Server 18.04 LTS (HVM), SSD Volume Type - ami-0bbe6b35405ecebdb (64-bit x86) / ami-0db180c518750ee4f (64-bit Arm)]
+        <li>Launch an EC2 Instance [Ubuntu Server 18.04 LTS (HVM), SSD Volume Type - ami-0bbe6b305ecebdb (64-bit x86) / ami-0db180c518750ee4f (64-bit Arm)]
             <br><a href='ec2-01.png'><img src='ec2-01.png'></a>
         </li>
         <li>Add it to a Public Subnet in the Main VPC
@@ -193,7 +193,7 @@ sudo vim /etc/phpmyadmin/config.inc.php
 
 
         </li>
-        <li>Browse to http://54.188.1.202/phpmyadmin/
+        <li>Browse to http://ec2-54-188-1-202.us-west-2.compute.amazonaws.com/phpmyadmin/ (<i class="fas fa-exclamation-triangle"></i> will be deleted after the Bootcamp)
             <br><a href='config-ec2-01.png'><img src='config-ec2-01.png'></a>
         </li>
 
@@ -214,7 +214,7 @@ GRANT ALL PRIVILEGES ON classicmodels.* TO 'newdbuser'@'%' IDENTIFIED BY 'GandUn
         </li>
 
          <li>Upload our backed up database file to the EC2 instance and restore it into the database 
-            <br><a href='config-rds-01.png'><img src='config-rds-01.png'></a>
+            <br><a href='upload-01.png'><img src='upload-01.png'></a>
             <br><br>
     <div class='codediv'>
         <code>
@@ -227,7 +227,7 @@ mysql -h kempy-aurora.crzc9xds3qkq.us-west-2.rds.amazonaws.com\
     </div>
     <br><br>
         </li>
-        <li>Check the database in PHPMyAdmin - <a href='http://54.188.1.202/phpmyadmin/'>http://54.188.1.202/phpmyadmin/</a>
+        <li>Check the database in PHPMyAdmin - http://ec2-54-188-1-202.us-west-2.compute.amazonaws.com/phpmyadmin/ (<i class="fas fa-exclamation-triangle"></i> will be deleted after the Bootcamp)
             <br><a href='config-rds-02.png'><img src='config-rds-02.png'></a>
         </li>
 
